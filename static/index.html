@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tax Receipt Extractor</title>
+    <style>
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            white-space: pre-wrap;       /* Since CSS 2.1 */
+            white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+            white-space: -pre-wrap;      /* Opera 4-6 */
+            white-space: -o-pre-wrap;    /* Opera 7 */
+            word-wrap: break-word;       /* Internet Explorer 5.5+ */
+        }
+    </style>
 </head>
 <body>
     <h1>Upload Your Charitable Receipts</h1>
@@ -19,7 +32,7 @@
         <input type="file" id="fileInput" name="file" multiple>
         <button type="button" onclick="uploadFiles()">Upload</button>
     </form>
-    <div id="output"></div>
+    <pre id="output"></pre>
 
     <script>
         async function uploadFiles() {
