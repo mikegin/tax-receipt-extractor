@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
 import os
 import pymupdf
-import openai
+import re
+from openai import OpenAI
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -10,7 +11,7 @@ BASE_UPLOAD_FOLDER = './receipts'
 os.makedirs(BASE_UPLOAD_FOLDER, exist_ok=True)
 
 # Set your OpenAI API key
-openai.api_key = open
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def convert_pdf_to_text(pdf_path):
     doc = pymupdf.open(pdf_path) # open a document
@@ -20,25 +21,54 @@ def convert_pdf_to_text(pdf_path):
         result += f"\n\n{text}"
     return result
 
-def extract_info_using_gpt(text):
-    prompt = f"Extract the following information from the text: name, date, amount. Here is the text:\n\n{text}"
-    
-    response = openai.Completion.create(
-        model="text-davinci-004",
-        prompt=prompt,
-        max_tokens=500,
-        n=1,
-        stop=None,
-        temperature=0.5,
+def parse_response(text):
+    pattern = re.compile(
+        r"Recipient:\s*(?P<recipient>.+?)\s*\n"
+        r"Date:\s*(?P<date>\d{4}-\d{2}-\d{2})\s*\n"
+        r"Amount:\s*(?P<amount>\d+\.\d+)\s*"
     )
-    result = response.choices[0].text.strip()
-    return result
 
-def parse_donation_details(text):
-    extracted_info = extract_info_using_gpt(text)
-    # You may need to process extracted_info further to format it properly
-    # Assuming extracted_info is a dictionary with 'name', 'date', 'amount' keys
-    return eval(extracted_info)
+    match = pattern.search(text)
+    if match:
+        recipient = match.group("recipient")
+        date = match.group("date")
+        amount = match.group("amount")
+        
+        # Convert amount to float
+        amount = float(amount)
+        
+        return {
+            "recipient": recipient,
+            "date": date,
+            "amount": amount
+        }
+    else:
+        return {
+            "recipient": "Unknown",
+            "date": "1970-01-01",
+            "amount": 0.0
+        }
+
+def extract_info_using_gpt(text):    
+    completion = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[
+        {"role": "system", "content": f'''
+        You are a helpful assisstant. I will give you a charitable tax receipt. Please extract the information required in the format below. Only respond in this format.
+
+        Format:
+
+        Recipient: <name>
+        Date: <YYY-MM-DD>
+        Amount: <float>
+        '''},
+        {"role": "user", "content": text}
+    ]
+    )
+    
+    result = completion.choices[0].message.content
+    
+    return parse_response(result)
 
 def get_user_folder(year):
     user_ip = request.remote_addr.replace(':', '_')
@@ -65,6 +95,7 @@ def upload_file():
     donations = []
     user_folder = get_user_folder(year)
     
+    total_amount = 0
     for file in files:
         if file.filename == '':
             return jsonify({'error': 'No selected file'})
@@ -72,14 +103,14 @@ def upload_file():
         file.save(filename)
         
         text = convert_pdf_to_text(filename)
-        donation_details = parse_donation_details(text)
+        donation_details = extract_info_using_gpt(text)
         donation_details["file"] = filename
         donations.append(donation_details)
-    
-    total_amount = sum(donation["amount"] for donation in donations)
+        total_amount += donation_details["amount"]
+        
     summary = {
         "items": donations,
-        "total": total_amount
+        "total_amount": total_amount
     }
     return jsonify(summary)
 

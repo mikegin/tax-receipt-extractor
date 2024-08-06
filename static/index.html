@@ -8,6 +8,14 @@
 <body>
     <h1>Upload Your Charitable Receipts</h1>
     <form id="uploadForm" enctype="multipart/form-data">
+        <label for="year">Select Year:</label>
+        <select id="year" name="year">
+            <option value="2023">2023</option>
+            <option value="2022">2022</option>
+            <option value="2021">2021</option>
+            <!-- Add more years as needed -->
+        </select>
+        <br><br>
         <input type="file" id="fileInput" name="file" multiple>
         <button type="button" onclick="uploadFiles()">Upload</button>
     </form>
