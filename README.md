@@ -2,6 +2,7 @@
 
 ## for a list of tax receipts in pdf format extract recipient, date, amount and sum the total
 
+![alt text](screenshot.png "App Screenshot")
 
 ### Steps to run:
 
