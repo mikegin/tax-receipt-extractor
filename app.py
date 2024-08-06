@@ -104,7 +104,7 @@ def upload_file():
         
         text = convert_pdf_to_text(filename)
         donation_details = extract_info_using_gpt(text)
-        donation_details["file"] = filename
+        donation_details["file"] = file.filename
         donations.append(donation_details)
         total_amount += donation_details["amount"]
         
