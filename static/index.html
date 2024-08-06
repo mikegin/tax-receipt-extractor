@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Receipt Extractor</title>
+</head>
+<body>
+    <h1>Upload Your Charitable Receipts</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" id="fileInput" name="file" multiple>
+        <button type="button" onclick="uploadFiles()">Upload</button>
+    </form>
+    <div id="output"></div>
+
+    <script>
+        async function uploadFiles() {
+            const form = document.getElementById('uploadForm');
+            const formData = new FormData(form);
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const result = await response.json();
+            document.getElementById('output').innerText = JSON.stringify(result, null, 2);
+        }
+    </script>
+</body>
+</html>
